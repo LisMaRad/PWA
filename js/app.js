@@ -59,6 +59,7 @@ const showMeals = () => {
 document.addEventListener("DOMContentLoaded", showMeals)
 
 const shareButton = document.querySelector('#share');
+const contactButton = document.querySelector('#contact');
 
 const share = async (title, text) => {
     console.log(localStorage.getItem('meal'));
@@ -89,6 +90,27 @@ shareButton.style.display = 'block';
 shareButton.addEventListener('click', async () => {
     return share('Meal plan', 'Some meal suggestions from all around the world');
 });
+contactButton.style.display = 'block';
+contactButton.style.display = 'block';
+contactButton.addEventListener('click', async () => {
+    const contacts = await getContacts();
+    if (contacts) {
+        ctx.font = '1em Comic Sans MS';
+        contacts.forEach((contact, index) => {
+            ctx.fillText(contact.name.join(), 20, 16 * ++index, canvas.width);
+        });
+    }
+});
+
+const getContacts = async () => {
+    const properties = ['name'];
+    const options = { multiple: true };
+    try {
+        return await navigator.contacts.select(properties, options);
+    } catch (err) {
+        console.error(err.name, err.message);
+    }
+};
 
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", function() {
