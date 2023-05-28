@@ -64,7 +64,7 @@ const share = async (title, text) => {
     console.log(localStorage.getItem('meal'));
     const data = {
         files: [
-            new File(localStorage.getItem('meal'), 'mealPlan.txt', {
+            new File([localStorage.getItem('meal')], 'mealPlan.txt', {
                 type: "text/plain",
             }),
         ],
