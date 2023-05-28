@@ -1,0 +1,28 @@
+{
+  "name": "Meal generator",
+  "lang": "en-us",
+  "short_name": "MealGen",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#fdfdfd",
+  "theme_color": "#db4938",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/fork_and_knife_16.png",
+      "type": "image/png", "sizes": "16x16"
+    },
+    {
+      "src": "/icons/fork_and_knife_64.png",
+      "type": "image/png", "sizes": "64x64"
+    },
+    {
+      "src": "/icons/fork_and_knife_128.png",
+      "type": "image/png","sizes": "128x128"
+    },
+    {
+      "src": "/icons/fork_and_knife_512.png",
+      "type": "image/png", "sizes": "512x512"
+    }
+  ]
+}
