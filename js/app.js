@@ -60,9 +60,10 @@ document.addEventListener("DOMContentLoaded", showMeals)
 
 const shareButton = document.querySelector('#share');
 const contactButton = document.querySelector('#contact');
+const copyButton = document.querySelector('#copy');
+const pasteButton = document.querySelector('#paste');
 
 const share = async (title, text) => {
-    console.log(localStorage.getItem('meal'));
     const data = {
         files: [
             new File([localStorage.getItem('meal')], 'mealPlan.txt', {
@@ -111,6 +112,37 @@ const getContacts = async () => {
         console.error(err.name, err.message);
     }
 };
+
+const copy = async (blob) => {
+        try {
+            await navigator.clipboard.writeText(blob);
+            console.log('saved content copied');
+        } catch (err) {
+            console.error('Failed to copy: ', err);
+        }
+};
+
+copyButton.style.display = 'block';
+copyButton.addEventListener('click', async () => {
+    await copy(localStorage.getItem('meal'));
+});
+
+pasteButton.style.display = 'block';
+pasteButton.addEventListener('click', async () => {{
+        try {
+            const text = await navigator.clipboard.readText();
+            console.log('Pasted content: ', text);
+            document.getElementById("pasteField").innerHTML = `<p>${text}</p><button id="close" onclick="closeField()">close</button>`;
+            document.getElementById('pasteField').style.cssText = 'display: block';
+
+        } catch (err) {
+            console.error('Failed to read clipboard contents: ', err);
+        }}
+});
+
+function closeField(){
+    document.getElementById('pasteField').style.cssText = 'display: none';
+}
 
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", function() {
