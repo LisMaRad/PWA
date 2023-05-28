@@ -61,10 +61,10 @@ document.addEventListener("DOMContentLoaded", showMeals)
 const shareButton = document.querySelector('#share');
 
 const share = async (title, text) => {
-    console.log(JSON.parse(localStorage.getItem('meal')));
+    console.log(localStorage.getItem('meal'));
     const data = {
         files: [
-            new File(JSON.parse(localStorage.getItem('meal')), 'mealPlan.txt', {
+            new File(localStorage.getItem('meal'), 'mealPlan.txt', {
                 type: "text/plain",
             }),
         ],
