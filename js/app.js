@@ -60,10 +60,11 @@ document.addEventListener("DOMContentLoaded", showMeals)
 
 const shareButton = document.querySelector('#share');
 
-const share = async (title, text, meals) => {
+const share = async (title, text) => {
+    console.log(JSON.parse(localStorage.getItem('meal')));
     const data = {
         files: [
-            new File([meals], 'mealPlan.txt', {
+            new File(JSON.parse(localStorage.getItem('meal')), 'mealPlan.txt', {
                 type: "text/plain",
             }),
         ],
@@ -71,10 +72,14 @@ const share = async (title, text, meals) => {
         text: text,
     };
     try {
-        if (!navigator.canShare(data)) {
+        if (navigator.share) {
+            console.log('The native share feature is implemented');
+            await navigator.share(data);
+        } else {
+            console.log('The native share feature is not implemented');
             throw new Error("Can't share data.", data);
         }
-        await navigator.share(data);
+
     } catch (err) {
         console.error(err.name, err.message);
     }
@@ -82,7 +87,7 @@ const share = async (title, text, meals) => {
 
 shareButton.style.display = 'block';
 shareButton.addEventListener('click', async () => {
-    return share('Meal plan', 'Some meal suggestions from all around the world', JSON.parse(localStorage.getItem('meal')));
+    return share('Meal plan', 'Some meal suggestions from all around the world');
 });
 
 if ("serviceWorker" in navigator) {
