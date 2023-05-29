@@ -8,6 +8,15 @@ function Meal() {
 
 var selectedMeal = new Meal();
 
+// Initialize deferredPrompt for use later to show browser install prompt.
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    // Stash the event so it can be triggered later.
+    deferredPrompt = e;
+});
 async function findMeal () {
     const response = await fetch("https://www.themealdb.com/api/json/v1/1/random.php");
     const jsonData = await response.json();
@@ -30,29 +39,12 @@ function addToList(){
         const mealArray = JSON.parse(localStorage.getItem('meal'));
         mealArray.push({"name" : selectedMeal.name,"country": selectedMeal.country,"category" : selectedMeal.category});
         localStorage.setItem('meal', JSON.stringify(mealArray));
-        Notification.requestPermission().then((result) => {
-            if (result === "granted") {
-                sendNotification(selectedMeal.name);
-            }
-        });
         showMeals();
     }
     else{
         localStorage.setItem('meal', JSON.stringify([{"name" : selectedMeal.name,"country": selectedMeal.country,"category" : selectedMeal.category}]));
         showMeals();
     }
-}
-
-function sendNotification(mealName) {
-    console.log(mealName);
-    const notifTitle = "You added a meal";
-    const notifBody = `You just added ${mealName} to your list`;
-    const notifImg = `icons/fork_and_knife_16.png`;
-    const options = {
-        body: notifBody,
-        icon: notifImg,
-    };
-    new Notification(notifTitle, options);
 }
 
 const showMeals = () => {
@@ -76,10 +68,22 @@ const showMeals = () => {
 document.addEventListener("DOMContentLoaded", showMeals)
 
 const shareButton = document.querySelector('#share');
-const contactButton = document.querySelector('#contact');
 const copyButton = document.querySelector('#copy');
 const pasteButton = document.querySelector('#paste');
+const installButton = document.querySelector('#install');
 
+installButton.addEventListener('click', async () => {
+    // Hide the app provided install promotion
+    hideInstallPromotion();
+    // Show the install prompt
+    deferredPrompt.prompt();
+    // Wait for the user to respond to the prompt
+    const { outcome } = await deferredPrompt.userChoice;
+    // Optionally, send analytics event with outcome of user choice
+    console.log(`User response to the install prompt: ${outcome}`);
+    // We've used the prompt, and can't use it again, throw it away
+    deferredPrompt = null;
+});
 const share = async (title, text) => {
     const data = {
         files: [
@@ -108,27 +112,6 @@ shareButton.style.display = 'block';
 shareButton.addEventListener('click', async () => {
     return share('Meal plan', 'Some meal suggestions from all around the world');
 });
-contactButton.style.display = 'block';
-contactButton.style.display = 'block';
-contactButton.addEventListener('click', async () => {
-    const contacts = await getContacts();
-    if (contacts) {
-        ctx.font = '1em Comic Sans MS';
-        contacts.forEach((contact, index) => {
-            ctx.fillText(contact.name.join(), 20, 16 * ++index, canvas.width);
-        });
-    }
-});
-
-const getContacts = async () => {
-    const properties = ['name'];
-    const options = { multiple: true };
-    try {
-        return await navigator.contacts.select(properties, options);
-    } catch (err) {
-        console.error(err.name, err.message);
-    }
-};
 
 const copy = async (blob) => {
         try {
@@ -165,7 +148,6 @@ if ("serviceWorker" in navigator) {
     window.addEventListener("load", function() {
         navigator.serviceWorker
             .register("/serviceWorker.js")
-            .then((registration) => registration.pushManager.getSubscription())
             .then(res => console.log("service worker registered"))
             .catch(err => console.log("service worker not registered", err))
     })
