@@ -30,12 +30,29 @@ function addToList(){
         const mealArray = JSON.parse(localStorage.getItem('meal'));
         mealArray.push({"name" : selectedMeal.name,"country": selectedMeal.country,"category" : selectedMeal.category});
         localStorage.setItem('meal', JSON.stringify(mealArray));
+        Notification.requestPermission().then((result) => {
+            if (result === "granted") {
+                sendNotification(selectedMeal.name);
+            }
+        });
         showMeals();
     }
     else{
         localStorage.setItem('meal', JSON.stringify([{"name" : selectedMeal.name,"country": selectedMeal.country,"category" : selectedMeal.category}]));
         showMeals();
     }
+}
+
+function sendNotification(mealName) {
+    console.log(mealName);
+    const notifTitle = "You added a meal";
+    const notifBody = `You just added ${mealName} to your list`;
+    const notifImg = `icons/fork_and_knife_16.png`;
+    const options = {
+        body: notifBody,
+        icon: notifImg,
+    };
+    new Notification(notifTitle, options);
 }
 
 const showMeals = () => {
@@ -148,6 +165,7 @@ if ("serviceWorker" in navigator) {
     window.addEventListener("load", function() {
         navigator.serviceWorker
             .register("/serviceWorker.js")
+            .then((registration) => registration.pushManager.getSubscription())
             .then(res => console.log("service worker registered"))
             .catch(err => console.log("service worker not registered", err))
     })
