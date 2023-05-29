@@ -3,26 +3,26 @@ const assets = [
     "/"
 ]
 
-// self.addEventListener("install", installEvent => {
-//     installEvent.waitUntil(
-//         caches.open(staticMealPlan).then(cache => {
-//             return cache.addAll(assets)
-//         })
-//     )
-// })
+self.addEventListener("install", installEvent => {
+    installEvent.waitUntil(
+        caches.open(staticMealPlan).then(cache => {
+            return cache.addAll(assets)
+        })
+    )
+})
 
-const filesUpdate = cache => {
-    const stack = [];
-    assets.forEach(file => stack.push(
-        cache.add(file).catch(_=>console.error(`can't load ${file} to cache`))
-    ));
-    return Promise.all(stack);
-};
-self.addEventListener("install", function (event) {
-    console.log("[ServiceWorker] Install");
-
-    event.waitUntil(caches.open(staticMealPlan).then(filesUpdate));
-});
+// const filesUpdate = cache => {
+//     const stack = [];
+//     assets.forEach(file => stack.push(
+//         cache.add(file).catch(_=>console.error(`can't load ${file} to cache`))
+//     ));
+//     return Promise.all(stack);
+// };
+// self.addEventListener("install", function (event) {
+//     console.log("[ServiceWorker] Install");
+//
+//     event.waitUntil(caches.open(staticMealPlan).then(filesUpdate));
+// });
 
 // self.addEventListener("fetch", fetchEvent => {
 //     fetchEvent.respondWith(
@@ -32,11 +32,17 @@ self.addEventListener("install", function (event) {
 //     )
 // })
 
+self.addEventListener('activate', event => {
+    console.log('V1 now ready to handle fetches!');
+});
+
 self.addEventListener("fetch", (event) => {
     console.log(`Handling fetch event for ${event.request.url}`);
 
-    event.respondWith(
-        caches.match(event.request).then((response) => {
+    event.respondWith(async() => {
+        const cache = await caches.open(staticMealPlan);
+
+        cache.match(event.request).then((response) => {
             if (response) {
                 console.log("Found response in cache:", response);
                 return response;
@@ -54,5 +60,7 @@ self.addEventListener("fetch", (event) => {
                     throw error;
                 });
         })
+    }
+
     );
 });
