@@ -65,6 +65,18 @@ const shareButton = document.querySelector('#share');
 const copyButton = document.querySelector('#copy');
 const pasteButton = document.querySelector('#paste');
 const installButton = document.querySelector('#install');
+const notificationButton = document.querySelector('#notification');
+const messageButton = document.querySelector('#message');
+
+messageButton.addEventListener("click", function () {
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.controller.postMessage({
+            name: "Lisa",
+            surname: "Rader",
+            title: "Ich sende eine Nachricht",
+        });
+    }
+});
 
 window.addEventListener("beforeinstallprompt", function (e) {
     console.log("beforeinstallprompt Event fired");
@@ -159,6 +171,9 @@ function closeField(){
 }
 
 if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("message", function (event) {
+        console.log(event.data);
+    });
     window.addEventListener("load", function() {
         navigator.serviceWorker
             .register("/serviceWorker.js")
