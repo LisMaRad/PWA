@@ -1,4 +1,12 @@
-const container = document.querySelector(".container")
+const container = document.querySelector(".container");
+const shareButton = document.querySelector('#share');
+const copyButton = document.querySelector('#copy');
+const pasteButton = document.querySelector('#paste');
+const installButton = document.querySelector('#install');
+const notificationButton = document.querySelector('#notification');
+const messageButton = document.querySelector('#message');
+
+const applicationServerPublicKey = 'BE9VrOtBUXNfIf484GQdF_EDIsCkdpnsM_sszed0AXsdNy3qiDGBjmnUKqyeU4FC4YEYz3F6V0rOjRwECDLsv8M';
 
 function Meal() {
     this.name;
@@ -10,7 +18,114 @@ var selectedMeal = new Meal();
 
 // Initialize deferredPrompt for use later to show browser install prompt.
 var deferredPrompt;
+let isSubscribed = false;
+let swRegistration = null;
 
+
+function initializeUI() {
+    notificationButton.addEventListener('click', function() {
+        notificationButton.disabled = true;
+        if (isSubscribed) {
+            // TODO: Unsubscribe user
+        } else {
+            subscribeUser();
+        }
+    });
+    // Set the initial subscription value
+    swRegistration.pushManager.getSubscription()
+        .then(function(subscription) {
+            isSubscribed = !(subscription === null);
+
+            if (isSubscribed) {
+                console.log('User IS subscribed.');
+            } else {
+                console.log('User is NOT subscribed.');
+            }
+
+            updateBtn();
+        });
+}
+function subscribeUser() {
+    const applicationServerKey = urlB64ToUint8Array(applicationServerPublicKey);
+    swRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: applicationServerKey
+    })
+        .then(function(subscription) {
+            console.log('User is subscribed.');
+
+            updateSubscriptionOnServer(subscription);
+
+            isSubscribed = true;
+
+            updateBtn();
+        })
+        .catch(function(error) {
+            console.error('Failed to subscribe the user: ', error);
+            updateBtn();
+        });
+}
+
+function updateSubscriptionOnServer(subscription) {
+    // TODO: Send subscription to application server
+
+
+    if (subscription) {
+        document.getElementById("pasteField").innerHTML = `<p>${JSON.stringify(subscription)}</p><button id="close" onclick="closeField()">close</button>`;
+        document.getElementById('pasteField').style.cssText = 'display: block';
+}}
+
+function updateBtn() {
+    if (Notification.permission === 'denied') {
+        notificationButton.textContent = 'Push Messaging Blocked';
+        notificationButton.disabled = true;
+        updateSubscriptionOnServer(null);
+        return;
+    }
+    if (isSubscribed) {
+        notificationButton.textContent = 'Disable Push Messaging';
+    } else {
+        notificationButton.textContent = 'Enable Push Messaging';
+    }
+
+    notificationButton.disabled = false;
+}
+
+notificationButton.addEventListener('click', function() {
+    notificationButton.disabled = true;
+    if (isSubscribed) {
+        unsubscribeUser();
+    } else {
+        subscribeUser();
+    }
+});
+
+function unsubscribeUser() {
+    swRegistration.pushManager.getSubscription()
+        .then(function(subscription) {
+            if (subscription) {
+                return subscription.unsubscribe();
+            }
+        })
+        .catch(function(error) {
+            console.log('Error unsubscribing', error);
+        })
+        .then(function() {
+            updateSubscriptionOnServer(null);
+
+            console.log('User is unsubscribed.');
+            isSubscribed = false;
+
+            updateBtn();
+        });
+}
+navigator.serviceWorker.register('ServiceWorker.js')
+    .then(function(swReg) {
+        console.log('Service Worker is registered', swReg);
+
+        swRegistration = swReg;
+        initializeUI();
+    })
 async function findMeal () {
     const response = await fetch("https://www.themealdb.com/api/json/v1/1/random.php");
     const jsonData = await response.json();
@@ -61,12 +176,6 @@ const showMeals = () => {
 }
 document.addEventListener("DOMContentLoaded", showMeals)
 
-const shareButton = document.querySelector('#share');
-const copyButton = document.querySelector('#copy');
-const pasteButton = document.querySelector('#paste');
-const installButton = document.querySelector('#install');
-const notificationButton = document.querySelector('#notification');
-const messageButton = document.querySelector('#message');
 
 messageButton.addEventListener("click", function () {
     if ("serviceWorker" in navigator) {
@@ -170,14 +279,42 @@ function closeField(){
     document.getElementById('pasteField').style.cssText = 'display: none';
 }
 
-if ("serviceWorker" in navigator) {
+function urlB64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+if ("serviceWorker" in navigator && 'PushManager' in window) {
     navigator.serviceWorker.addEventListener("message", function (event) {
         console.log(event.data);
     });
-    window.addEventListener("load", function() {
+    window.addEventListener("load",  function() {
         navigator.serviceWorker
             .register("/serviceWorker.js")
+            .then(async () =>{
+                await navigator.serviceWorker.ready;
+        })
+            .then(function(swReg) {
+            console.log('Service Worker is registered', swReg);
+
+            swRegistration = swReg;
+            initializeUI();
+        })
             .then(res => console.log("service worker registered"))
             .catch(err => console.log("service worker not registered", err))
     })
+} else {
+    console.warn('Push messaging is not supported');
+    notificationButton.textContent = 'Push Not Supported';
 }
+

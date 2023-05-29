@@ -32,10 +32,6 @@ self.addEventListener("install", installEvent => {
 //     )
 // })
 
-self.addEventListener('activate', event => {
-    console.log('V1 now ready to handle fetches!');
-});
-
 self.addEventListener("fetch", (event) => {
     console.log(`Handling fetch event for ${event.request.url}`);
 
@@ -62,5 +58,28 @@ self.addEventListener("fetch", (event) => {
         })
     }
 
+    );
+});
+
+self.addEventListener('push', function(event) {
+    console.log('[Service Worker] Push Received.');
+    console.log(`[Service Worker] Push had this data: "${event.data.text()}"`);
+
+    const title = 'Mealplan';
+    const options = {
+        body: 'Yay it works.',
+        icon: 'icons/fork_and_knife_16.png',
+    };
+
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', function(event) {
+    console.log('[Service Worker] Notification click received.');
+
+    event.notification.close();
+
+    event.waitUntil(
+        clients.openWindow('https://developers.google.com/web')
     );
 });
